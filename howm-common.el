@@ -1,5 +1,6 @@
+;;; -*- lexical-binding: nil; -*-
 ;;; howm-common.el --- Wiki-like note-taking tool
-;;; Copyright (C) 2002, 2003, 2004, 2005-2023
+;;; Copyright (C) 2002, 2003, 2004, 2005-2025
 ;;;   HIRAOKA Kazuyuki <kakkokakko@gmail.com>
 ;;;
 ;;; This program is free software; you can redistribute it and/or modify
@@ -30,6 +31,19 @@
          (sorted (sort orig (lambda (x y)
                               (funcall comparer (car x) (car y))))))
     (mapcar #'cdr sorted)))
+
+(defun howm-recent-items-filter (folder-items)
+  "Remove objects from FOLDER-ITEMS.
+The objects removed are those matching
+`howm-recent-excluded-files-regexp'."
+  (if howm-recent-excluded-files-regexp
+      (seq-remove
+       (lambda (x)
+         (string-match-p
+          howm-recent-excluded-files-regexp
+          (car x)))
+       folder-items)
+    folder-items))
 
 (defun howm-subdirectory-p (dir target &optional strict)
   "For the directory DIR, check whether TARGET is under it.
@@ -159,7 +173,7 @@ STRING should be given if the last search was by `string-match' on STRING."
 ;; (howm-map-with-index #'cons '(a b c)) ==> ((a . 0) (b . 1) (c . 2))
 (defun howm-map-with-index (f seq)
   "Map with index. For example, 
-(howm-map-with-index #'cons '(a b c)) returns ((a . 0) (b . 1) (c . 2))."
+(howm-map-with-index #\\='cons \\='(a b c)) returns ((a . 0) (b . 1) (c . 2))."
   (let ((howm-map-with-index-count -1))
     (mapcar (lambda (x)
               (setq howm-map-with-index-count (1+ howm-map-with-index-count))
@@ -234,8 +248,8 @@ If PASS-RET-THROUGH is non-nil, RET is unread and nil is returned.
 
 (defun howm-first-n (seq n)
   "Return the subsequence of SEQ from start to N-th item.
-(howm-first-n '(a b c d e) 3) ==> (a b c)
-(howm-first-n '(a b c d e) 10) ==> (a b c d e)
+(howm-first-n \\='(a b c d e) 3) ==> (a b c)
+(howm-first-n \\='(a b c d e) 10) ==> (a b c d e)
 "
   ;; GNU emacs: (subseq '(a b c d e) 0 7) ==> (a b c d e nil nil)
   ;; xemacs:    (subseq '(a b c d e) 0 7) ==> Args out of range
@@ -298,20 +312,8 @@ If PASS-RET-THROUGH is non-nil, RET is unread and nil is returned.
 
 (defun howm-basic-save-buffer ()
   "Silent version of `basic-save-buffer' without \"Wrote ...\" message."
-  (let ((original-write-region (symbol-function 'write-region)))
-    ;; make silent `write-region', which doesn't say "Wrote ...".
-    ;; I borrowed the idea from Okuyama's auto-save-buffers. thx.
-    ;; http://homepage3.nifty.com/oatu/emacs/misc.html
-    (cl-flet ((write-region (start end filename
-                                &optional append visit lockname must)
-                         (funcall original-write-region
-                                  start end filename append
-                                  'dont-say-wrote-foobar
-                                  lockname must)))
-      (basic-save-buffer)))
-  ;; As a side effect, basic-save-buffer does not update buffer-modified-p.
-  (set-visited-file-modtime)
-  (set-buffer-modified-p nil))
+  (let ((inhibit-message t))
+    (basic-save-buffer)))
 
 (defvar howm-log-buffer-name-format " *howm-log:%s*")
 (defun howm-write-log (message fmt file &optional limit remove-fmt)
@@ -363,7 +365,7 @@ Both strings and symbols are acceptable in ARGS."
 CLASSIFIER is criterion of classification for list LIS.
 If REVERSE is non-nil, order of elements are reversed (faster).
 For example,
-  (howm-classify (lambda (s) (substring s 0 1)) '(\"aaa\" \"abc\" \"xyz\"))
+  (howm-classify (lambda (s) (substring s 0 1)) \\='(\"aaa\" \"abc\" \"xyz\"))
 returns ((\"a\" \"aaa\" \"abc\") (\"x\" \"xyz\"))."
   (let ((ans nil))
     (mapc (lambda (x)
@@ -441,8 +443,8 @@ with the below code.
 (defmacro howm-with-coding-system (coding-system &rest body)
   "With CODING-SYSTEM, execute BODY.
 examples:
- (howm-with-coding-system 'euc-jp-unix ...)  ;; for both read and write
- (howm-with-coding-system '(utf-8-unix . sjis-unix) ...)  ;; (read . write)
+ (howm-with-coding-system \\='euc-jp-unix ...)  ;; for both read and write
+ (howm-with-coding-system \\='(utf-8-unix . sjis-unix) ...)  ;; (read . write)
  (howm-with-coding-system nil ...)  ;; howm-process-coding-system is used."
   (declare (indent 1))
   (let ((g (cl-gensym))
@@ -525,8 +527,8 @@ Use `howm-with-schedule-interval' instead.")
   (cdr howm-reminder-schedule-interval))
 (defmacro howm-with-schedule-interval (interval &rest body)
   "Set the interval of visible schedule items in reminder list on menu.
-INTERVAL is a form like (-1 2), which means 'from yesterday to the day
-after tomorrow'. BODY is evaluated under this setting;
+INTERVAL is a form like (-1 2), which means \"from yesterday to the day
+after tomorrow\". BODY is evaluated under this setting;
 `howm-reminder-schedule-interval-from' returns -1 and
 `howm-reminder-schedule-interval-to' returns 2."
   (declare (indent 1))

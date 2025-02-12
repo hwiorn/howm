@@ -1,5 +1,6 @@
+;;; -*- lexical-binding: nil; -*-
 ;;; riffle.el --- template of list browser with immediate preview
-;;; Copyright (C) 2004, 2005-2023
+;;; Copyright (C) 2004, 2005-2025
 ;;;   HIRAOKA Kazuyuki <kakkokakko@gmail.com>
 ;;;
 ;;; This program is free software; you can redistribute it and/or modify
@@ -125,24 +126,34 @@ even if you delete other windows explicitly."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; common
 
-(defcustom riffle-mode-hook nil
-  "Hook run at the end of function `riffle-mode'"
-  :type 'hook
-  :group 'howm-hook)
+(define-derived-mode riffle-mode text-mode "Riffle")
 
-(defvar riffle-mode-map nil)
-(put 'riffle-mode-map 'risky-local-variable t)
-(defvar riffle-mode-syntax-table (make-syntax-table))
-(defvar riffle-mode-abbrev-table nil)
+(defvar riffle-protected-localvar-prefixes
+  '("action-lock-" "howm-" "illusion-" "riffle-")
+  "Prefixes of buffer-local variable names that are protected from
+`kill-all-local-variables', which is called in `riffle-mode' through
+`fundamental-mode'.")
 
-(defun riffle-mode ()
-  "not yet"
-  (setq major-mode 'riffle-mode
-        mode-name "Riffle")
-  (use-local-map riffle-mode-map)
-  (set-syntax-table riffle-mode-syntax-table)
-  (define-abbrev-table 'riffle-mode-abbrev-table nil)
-  (run-hooks 'riffle-mode-hook))
+(defun riffle-mode-localvar-advice (orig &rest args)
+  "Recover buffer-local variables that match
+`riffle-protected-localvar-prefixes' after
+`kill-all-local-variables' is called in `fundamental-mode'."
+  (let ((vs (buffer-local-variables))
+        (ret (apply orig args)))
+    (mapc (lambda (pair)
+            (let* ((v (car pair))
+                   ;; See the document of `kill-all-local-variables'
+                   ;; for this property.
+                   (protected (get v 'permanent-local))
+                   (matched
+                    (cl-find-if (lambda (p) (string-prefix-p p (symbol-name v)))
+                                riffle-protected-localvar-prefixes)))
+              (when (and matched (not protected))
+                (set v (cdr pair)))))
+          vs)
+    ret))
+
+(advice-add 'riffle-mode :around #'riffle-mode-localvar-advice)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; summary
@@ -458,6 +469,8 @@ snap://Info-mode/emacs#File Variables
       (let ((even-window-heights (if size
                                      nil
                                    even-window-heights))
+            ;; Skip all user options and force the default behavior.
+            (display-buffer-overriding-action display-buffer-fallback-action)
             ;; Don't split windows further even when
             ;; riffle-pop-to-buffer is called twice.
             (pop-up-windows nil))
@@ -510,7 +523,7 @@ snap://Info-mode/emacs#File Variables
 (let ((m riffle-summary-mode-map))
   (define-key m " " 'riffle-pop-or-scroll-other-window)
   (define-key m [backspace] 'scroll-other-window-down)
-  (define-key m "\C-h" 'scroll-other-window-down)
+  (define-key m (kbd "DEL") 'scroll-other-window-down)
   (define-key m "j" 'riffle-scroll-other-window)
   (define-key m "k" 'riffle-scroll-other-window-down)
   (define-key m "@" 'riffle-summary-to-contents)
@@ -526,7 +539,7 @@ snap://Info-mode/emacs#File Variables
 (let ((m riffle-contents-mode-map))
   (define-key m " " 'scroll-up)
   (define-key m [backspace] 'scroll-down)
-  (define-key m "\C-h" 'scroll-down)
+  (define-key m (kbd "DEL") 'scroll-down)
   (define-key m "j" 'riffle-scroll-up)
   (define-key m "k" 'riffle-scroll-down)
   (define-key m "@" 'riffle-contents-to-summary)
@@ -583,7 +596,7 @@ snap://Info-mode/emacs#File Variables
                             "SampleS"
   "Sample summary mode.
 key	binding
----	-------
+---	-------\\<riffle-sample-summary-mode-map>
 \\[next-line]	Next item
 \\[previous-line]	Previous item
 \\[riffle-pop-or-scroll-other-window]	Pop and scroll contents
@@ -605,7 +618,7 @@ key	binding
                             "SampleC"
   "Sample contents mode.
 key	binding
----	-------
+---	-------\\<riffle-sample-contents-mode>
 \\[next-line]	Next line
 \\[previous-line]	Previous line
 \\[scroll-up]	Scroll up

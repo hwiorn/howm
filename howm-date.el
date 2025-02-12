@@ -1,5 +1,6 @@
+;;; -*- lexical-binding: nil; -*-
 ;;; howm-date.el --- Wiki-like note-taking tool
-;;; Copyright (C) 2002, 2003, 2004, 2005-2023
+;;; Copyright (C) 2002, 2003, 2004, 2005-2025
 ;;;   HIRAOKA Kazuyuki <kakkokakko@gmail.com>
 ;;;
 ;;; This program is free software; you can redistribute it and/or modify
@@ -82,10 +83,11 @@
 
 (defun howm-action-lock-date-search (date)
   (howm-set-command 'howm-action-lock-date-search)
-  (prog1
-      (howm-search date t)
+  (let ((items (howm-search date t)))
     (howm-action-lock-forward-escape)
-    (setq howm-date-current date)))
+    (when items
+      (setq howm-date-current date))
+    items))
 
 (defun howm-search-today ()
   (interactive)
@@ -235,14 +237,14 @@
          (c 0))
     (when (catch :found
             (while (progn
-                   (when (howm-action-lock-date-search new-date)
-                     (throw :found t))
-                   (< c howm-date-forward-ymd-limit))
-            (setq new-date (howm-datestr-shift new-date 0 0 step))
-            (setq c (1+ c))
-            (when howm-date-forward-ymd-msg
-              (format howm-date-forward-ymd-msg new-date)))
-          (error "Not found within %d days." howm-date-forward-ymd-limit))
+                     (when (howm-action-lock-date-search new-date)
+                       (throw :found t))
+                     (< c howm-date-forward-ymd-limit))
+              (setq new-date (howm-datestr-shift new-date 0 0 step))
+              (setq c (1+ c))
+              (when howm-date-forward-ymd-msg
+                (message howm-date-forward-ymd-msg new-date)))
+            (error "Not found within %d days." howm-date-forward-ymd-limit))
       (when (not (eq (current-buffer) b))
         (with-current-buffer b
           (howm-view-kill-buffer)))

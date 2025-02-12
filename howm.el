@@ -1,12 +1,12 @@
+;;; -*- lexical-binding: nil; -*-
 ;;; howm.el --- Wiki-like note-taking tool
-;;; -*- Emacs-Lisp -*-
 ;;; howm.el.  Generated from howm.el.in by configure.
 
-;; Copyright (C) 2002, 2003, 2004, 2005-2023 HIRAOKA Kazuyuki
+;; Copyright (C) 2002, 2003, 2004, 2005-2025 HIRAOKA Kazuyuki
 
 ;; Author: HIRAOKA Kazuyuki <kakkokakko@gmail.com>
 ;; URL: https://kaorahi.github.io/howm/
-;; Version: 1.5.1
+;; Version: 1.5.3
 ;; Package-Requires: ((cl-lib "0.5"))
 
 ;; This program is free software; you can redistribute it and/or modify
@@ -31,7 +31,7 @@
 
 ;;; Code:
 
-(defconst howm-version "1.5.1")
+(defconst howm-version "1.5.3")
 
 ;; Files [0]-[3] have only hierarchical dependencies,
 ;; whereas files in [5] have circular dependencies.

@@ -243,7 +243,7 @@ top_srcdir = @top_srcdir@
 EXTRA_DIST = CL-HOWM.ja.rd OLD.rd README.ja.rd README.rd TUTORIAL.ja.rd \
 	index-j.html index.html \
 	README-j.html README.html \
-	cat.png menu.png screen-shot.png search.png \
+	screenshot.png \
 	come.png go.png updown.png todo.png 
 
 MAINTAINERCLEANFILES = README-j.html README.html
@@ -455,7 +455,7 @@ uninstall-am: uninstall-docDATA
 
 
 README-j.html: README.ja.rd
-	rd2 README.ja.rd | nkf -w > README-j.html
+	rd2 README.ja.rd > README-j.html
 
 README.html: README.rd
 	rd2 README.rd > README.html

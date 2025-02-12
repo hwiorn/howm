@@ -1,6 +1,7 @@
+;;; -*- lexical-binding: nil; -*-
 ;;; action-lock.el --- invoke magic action by RET key on spell strings
 
-;; Copyright (C) 2002, 2003, 2004, 2005-2023
+;; Copyright (C) 2002, 2003, 2004, 2005-2025
 ;;   HIRAOKA Kazuyuki <kakkokakko@gmail.com>
 ;;
 ;; This program is free software; you can redistribute it and/or modify
@@ -62,11 +63,11 @@
 (defvar action-lock-date-default '("{_}" "[%Y-%m-%d %H:%M]"))  ;; before after
 
 (define-minor-mode action-lock-mode
-  "With no argument, this command toggles the mode.
-Non-null prefix argument turns on the mode.
-Null prefix argument turns off the mode.
+  "Toggle Action Lock mode.
 
-\\[action-lock-magic-return]  Envoke the action on the field
+key	binding
+---	-------
+\\<action-lock-mode-map>\\[action-lock-magic-return]	Invoke the action on the field
 "
   :init-value nil ;; default = off
   :lighter action-lock-lighter ;; mode-line

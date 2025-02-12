@@ -1,5 +1,6 @@
+;;; -*- lexical-binding: nil; -*-
 ;;; howm-vars.el --- Wiki-like note-taking tool
-;;; Copyright (C) 2005-2023
+;;; Copyright (C) 2005-2025
 ;;;   HIRAOKA Kazuyuki <kakkokakko@gmail.com>
 ;;;
 ;;; This program is free software; you can redistribute it and/or modify
@@ -77,7 +78,7 @@
 ;;      (howm-dont-warn-free-variable ,var)))
 (defmacro howm-dont-warn-free-variable (var)
   "No effect except for inhibition of warning in byte-compilation.
-Without this trick, compiler says 'reference to free variable' even when
+Without this trick, compiler says \"reference to free variable\" even when
 we have checked availability like (if (boundp xxx) ...)."
   `(when (boundp (quote ,var))
      (defvar ,var nil)))
@@ -87,11 +88,11 @@ we have checked availability like (if (boundp xxx) ...)."
 Otherwise, execute expressions in NOT-DEFINED.
 This is cheat to avoid warning while byte-compilation.
 Byte-compiler says \"not known to be defined\" even for codes like
-  (if (fboundp 'foo) (foo bar)).
+  (if (fboundp \\='foo) (foo bar)).
 
-\(macroexpand '(howm-funcall-if-defined (migemo-get-pattern roma) nil))
-==> (if (fboundp 'migemo-get-pattern)
-        (let ((howm-funcall-if-defined-f 'migemo-get-pattern))
+\(macroexpand \\='(howm-funcall-if-defined (migemo-get-pattern roma) nil))
+==> (if (fboundp \\='migemo-get-pattern)
+        (let ((howm-funcall-if-defined-f \\='migemo-get-pattern))
           (funcall howm-funcall-if-defined-f roma))
       nil)
 "
@@ -125,7 +126,7 @@ Byte-compiler says \"not known to be defined\" even for codes like
 (defvar howm-compatible-to-ver1dot3 nil
   "If non-nil, compatible values to howm-1.3.* are used
 as default of some variables; put (setq howm-compatible-to-ver1dot3 t)
-*before* (require 'howm) if you like.")
+*before* (require \\='howm) if you like.")
 
 (defgroup howm-compatibility nil
   "Compatibility to howm-1.3.*."
@@ -284,8 +285,9 @@ A file is excluded iff this regexp matches with all the relative paths."
   :group 'howm-menu)
 
 (defcustom howm-menu-footer nil
-  "Footer string for each menu. Nil means no footer."
-  :type '(radio (const :tag "Off" nil)
+  "Footer string for each menu."
+  :type '(radio (const :tag "Default (function `howm-menu-footer')" nil)
+                (const :tag "No footer" "")
                 string)
   :group 'howm-menu)
 
@@ -575,6 +577,15 @@ if `howm-list-normalizer' is non-nil."
   :type 'boolean
   :group 'howm-sort)
 
+(defcustom howm-recent-excluded-files-regexp nil
+  "Regexp matching names of files to exclude from recents.
+This affects the files shown in the recents section of the
+Howm-menu, as well as the files listed by `howm-list-recent'."
+  :type '(radio (const :tag "Default" nil)
+                regexp)
+  :group 'howm-menu-reminder
+  :group 'howm-files)
+
 ;;
 ;; Title
 ;;
@@ -608,7 +619,7 @@ if `howm-list-normalizer' is non-nil."
     howm-action-lock-date-search
     )
   "List of commands in which titles are listed instead of matched lines.
-T means 'always'.
+T means \"always\".
 If it is a function, the evaluated value is used instead of itself."
   :type `(radio (const :tag "Always" t)
                 (const :tag "Never" nil)
@@ -818,8 +829,8 @@ If the value is a cons pair, its car and cdr are used for read and write,
 respectively.
 
 Example:
- (setq howm-process-coding-system 'euc-japan-unix)
- (setq howm-process-coding-system '(utf-8-unix . sjis-unix))"
+ (setq howm-process-coding-system \\='euc-japan-unix)
+ (setq howm-process-coding-system \\='(utf-8-unix . sjis-unix))"
   :type '(radio (const :tag "Off" nil)
                 coding-system
                 (cons coding-system coding-system))
@@ -837,7 +848,8 @@ so that highlighting works correctly."
   :group 'howm-grep)
 
 (defcustom howm-iigrep-preview-items 20
-  "Show howm search results on the fly before hitting RET when the hit counts are within this number."
+  "Show howm search results on the fly before hitting RET when the hit
+counts are within this number."
   :type 'integer
   :group 'howm-efficiency
   :group 'howm-iigrep)
@@ -951,7 +963,7 @@ and `howm-viewer-type' accept functions instead of format strings.
 
 Example:
   (setq howm-view-external-viewer-assoc
-        '(
+        \\='(
           (\"[.]\\(jpg\\|gif\\|png\\)$\" . \"display %s\")
           (\"[.]dvi$\" . \"xdvi %s\")
          ))
@@ -983,7 +995,7 @@ cause conflicts."
 
 (defcustom howm-auto-narrow t
   "List of commands after which the function `howm-auto-narrow' can work.
-If the value is t, it means 'always'."
+If the value is t, it means \"always\"."
   :type `(radio (const :tag "Never" nil)
                 (const :tag "Always" t)
                 ,howm-custom-command-list)

@@ -1,5 +1,6 @@
+;;; -*- lexical-binding: nil; -*-
 ;;; iigrep.el - incremental interactive grep
-;;; Copyright (C) 2004, 2005-2023
+;;; Copyright (C) 2004, 2005-2025
 ;;;   HIRAOKA Kazuyuki <kakkokakko@gmail.com>
 ;;;
 ;;; This program is free software; you can redistribute it and/or modify
@@ -58,7 +59,7 @@
 (defvar iigrep-option "-nIe")
 (defvar iigrep-recursive-option "-r")
 (defvar iigrep-default-show-what 'full
-  "One of 'full, 'contents, 'counts, or nil.")
+  "One of \\='full, \\='contents, \\='counts, or nil.")
 
 (defvar iigrep-counts-face-rules
   '(
@@ -334,8 +335,8 @@ This value is also used for identification of iigrep processes.")
 ;; Use continuation to avoid slow response
 
 (defun iigrep-migemo (dir)
-  (require 'migemo)
   (interactive "Ddirectory: ")
+  (require 'migemo)
   (iigrep-with-converter #'iigrep-migemo-converter "migemo: "
     (iigrep dir)))
 
@@ -344,7 +345,7 @@ This value is also used for identification of iigrep processes.")
 (defvar iigrep-migemo-options '("-q")
   "*Options for migemo command for iigrep.
 The default value is for cmigemo.
-Use '(\"-S\" \"migemo\" \"-t\" \"egrep\") for the original migemo.")
+Use \\='(\"-S\" \"migemo\" \"-t\" \"egrep\") for the original migemo.")
 (defmacro iigrep-with-our-migemo (&rest body)
   (declare (indent 0))
   `(let ((iigrep-original-migemo-process migemo-process)
@@ -370,11 +371,9 @@ Use '(\"-S\" \"migemo\" \"-t\" \"egrep\") for the original migemo.")
   (migemo-init)
   (set-process-filter migemo-process
                       (iigrep-migemo-filter continuation))
-  (let ((orig-buffer (current-buffer)))
-    (save-excursion
-      (set-buffer (process-buffer migemo-process))
-      (delete-region (point-min) (point-max))
-      (process-send-string migemo-process (concat word "\n")))))
+  (with-current-buffer (process-buffer migemo-process)
+    (delete-region (point-min) (point-max))
+    (process-send-string migemo-process (concat word "\n"))))
 
 (defvar iigrep-migemo-last-pattern nil
   "For internal use.")
@@ -382,25 +381,23 @@ Use '(\"-S\" \"migemo\" \"-t\" \"egrep\") for the original migemo.")
   "For debug.")
 (defun iigrep-migemo-filter (continuation)
   `(lambda (process message)
-     (let ((orig-buffer (current-buffer)))
-       (save-excursion
-         (set-buffer (process-buffer process))
-         (insert message)
-         (when (and (> (point-max) 1)
-                    (eq (char-after (1- (point-max))) ?\n))
-           ;; AD HOC!
-           ;; I don't understand this.
-           ;; Observe iigrep-migemo-last-pattern and iigrep-migemo-last-buffer
-           ;; after typing keys fast.
-           (goto-char (point-min))
-           (skip-chars-forward "\n")
-           (let ((pattern (buffer-substring (point) (line-end-position))))
-             (setq iigrep-migemo-last-pattern pattern)
-             (setq iigrep-migemo-last-buffer
-                   (buffer-substring (point-min) (point-max)))
-             (erase-buffer)
-             (funcall (function ,continuation)
-                      pattern)))))))
+     (with-current-buffer (process-buffer process)
+       (insert message)
+       (when (and (> (point-max) 1)
+                  (eq (char-after (1- (point-max))) ?\n))
+         ;; AD HOC!
+         ;; I don't understand this.
+         ;; Observe iigrep-migemo-last-pattern and iigrep-migemo-last-buffer
+         ;; after typing keys fast.
+         (goto-char (point-min))
+         (skip-chars-forward "\n")
+         (let ((pattern (buffer-substring (point) (line-end-position))))
+           (setq iigrep-migemo-last-pattern pattern)
+           (setq iigrep-migemo-last-buffer
+                 (buffer-substring (point-min) (point-max)))
+           (erase-buffer)
+           (funcall (function ,continuation)
+                    pattern))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; key binding

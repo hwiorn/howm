@@ -1,5 +1,6 @@
+;;; -*- lexical-binding: nil; -*-
 ;;; howm-reminder.el --- Wiki-like note-taking tool
-;;; Copyright (C) 2002, 2003, 2004, 2005-2023
+;;; Copyright (C) 2002, 2003, 2004, 2005-2025
 ;;;   HIRAOKA Kazuyuki <kakkokakko@gmail.com>
 ;;;
 ;;; This program is free software; you can redistribute it and/or modify
@@ -403,7 +404,7 @@ and `howm-simulate-todo-reset'."
   (sit-for 5))
 (define-derived-mode howm-simulate-todo-mode howm-view-summary-mode "HowmT"
   "Major mode for a time machine simulation of the todo list in howm.
-(Tips) Type C-u 30 \\[howm-simulate-todo-next-date] to simulate 30 days later.
+(Tips) Type C-u 30 \\<howm-simulate-todo-mode-map>\\[howm-simulate-todo-next-date] to simulate 30 days later.
 
 key	binding
 ---	-------
@@ -412,7 +413,8 @@ key	binding
 \\[howm-simulate-todo-reset]	Reset to today
 "
   ;; major mode just for additional key bindings
-  (howm-view-summary-mode-body))
+  (howm-view-summary-mode-body)
+  (action-lock-mode -1))
 (let ((m howm-simulate-todo-mode-map))
   (mapc (lambda (args) (apply #'define-key m args))
         '((">" howm-simulate-todo-next-date)
@@ -422,10 +424,11 @@ key	binding
   (let ((howm-todo-separators nil))
     (howm-list-todo-sub-setup-items items)))
 (defun howm-simulate-todo-next-date (n &optional orig-items)
-  "Simulate the todo list as if today were N days after the current 'today'.
-If N is nil, reset the simulation to today's date.
-If ORIG-ITEMS is nil, use the item list of the current buffer.
-For example, to simulate 30 days later, call this function with the prefix C-u 30."
+  "Simulate the todo list as if today were N days after the current
+\\='today\\='.  If N is nil, reset the simulation to today\\='s date.
+If ORIG-ITEMS is nil, use the item list of the current buffer.  For
+example, to simulate 30 days later, call this function with the prefix
+C-u 30."
   (interactive "p")
   (howm-with-simulated-date
     (let* ((ti (howm-increment-simulated-date n))
@@ -447,8 +450,8 @@ For example, to simulate 30 days later, call this function with the prefix C-u 3
         (setq howm-view-mode-line-text
               (propertize msg 'face howm-simulate-todo-mode-line-face))))))
 (defun howm-simulate-todo-previous-date (n &optional orig-items)
-  "Simulate the todo list as if today were N days before the current 'today'.
-If N is nil, reset the simulation to today's date.
+  "Simulate the todo list as if today were N days before the current \\='today\\='.
+If N is nil, reset the simulation to today\\='s date.
 If ORIG-ITEMS is nil, use the item list of the current buffer.
 For example, to simulate 30 days ago, call this function with the prefix C-u 30."
   (interactive "p")
@@ -1015,8 +1018,8 @@ or TODO is t."
   "Modify variable VAR whose value is \"[...]\".
 Example:
  (setq foo \"[abc]\")
- (howm-modify-reminder-types 'foo \"d\" t)  foo ==> \"[abcd]\"
- (howm-modify-reminder-types 'foo \"b\" nil)  foo ==> \"[acd]\"
+ (howm-modify-reminder-types \\='foo \"d\" t)  foo ==> \"[abcd]\"
+ (howm-modify-reminder-types \\='foo \"b\" nil)  foo ==> \"[acd]\"
 "
   (let ((val (symbol-value var)))
     (when (not (string-match "^\\[\\(.*\\)\\]$" val))

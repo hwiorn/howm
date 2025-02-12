@@ -1,5 +1,6 @@
+;;; -*- lexical-binding: nil; -*-
 ;;; howm-backend.el --- Wiki-like note-taking tool
-;;; Copyright (C) 2005-2023
+;;; Copyright (C) 2005-2025
 ;;;   HIRAOKA Kazuyuki <kakkokakko@gmail.com>
 ;;;
 ;;; This program is free software; you can redistribute it and/or modify
@@ -440,7 +441,7 @@ ssearch: ")
 
 (defun howm-real-grep (str file-list &optional fixed-p force-case-fold)
   "Call grep and parse its result.
-'((file line-number line) (file line-number line) ...)
+\\='((file line-number line) (file line-number line) ...)
 "
   (if (howm-grep-multi-p)
       (howm-real-grep-multi str file-list fixed-p force-case-fold)
@@ -453,7 +454,7 @@ ssearch: ")
 (defun howm-real-grep-single (str file-list
                                   &optional fixed-p force-case-fold)
   "Call grep and parse its result.
-'((file line-number line) (file line-number line) ...)
+\\='((file line-number line) (file line-number line) ...)
 "
   (let ((trio (howm-real-grep-single-command
               str file-list fixed-p force-case-fold)))
@@ -518,7 +519,7 @@ When STR has no capital letters or FORCE-CASE-FOLD is non-nil,
 difference of capital letters and small letters are ignored.
 
 Extended feature:
-STR can be list of strings. They are regarded as 'or' pattern of all elements."
+STR can be list of strings. They are regarded as \"or\" pattern of all elements."
   (cl-mapcan (lambda (file)
                     (howm-fake-grep-file (howm-fake-grep-regexp str fixed-p)
                                          file force-case-fold))
@@ -862,11 +863,11 @@ STR can be list of strings. They are regarded as 'or' pattern of all elements."
         (funcall previewer page)
       (howm-viewer-indicator-gen "(%S %S)" func page))))
 
-(defadvice action-lock-find-file (around external-viewer (f u) activate)
+(define-advice action-lock-find-file (:around (orig-fun f u) external-viewer)
   (let ((viewer (howm-page-viewer f)))
     (if viewer
         (howm-viewer-call viewer (expand-file-name f))
-      ad-do-it)))
+      (funcall orig-fun f u))))
 
 ;; For backward compatibility. Don't use them any more.
 (defalias 'howm-view-external-viewer      #'howm-page-viewer)

@@ -1,5 +1,6 @@
+;;; -*- lexical-binding: nil; -*-
 ;;; howm-view.el --- Wiki-like note-taking tool
-;;; Copyright (C) 2002, 2003, 2004, 2005-2023
+;;; Copyright (C) 2002, 2003, 2004, 2005-2025
 ;;;   HIRAOKA Kazuyuki <kakkokakko@gmail.com>
 ;;;
 ;;; This program is free software; you can redistribute it and/or modify
@@ -66,6 +67,8 @@
 (howm-defvar-risky howm-view-filter-methods
   '(("name" . howm-view-filter-by-name)
     ("summary" . howm-view-filter-by-summary)
+    ("keyword" . howm-view-filter-by-keyword-in-summary)
+    ("Keyword-in-contents" . howm-view-filter-by-keyword-in-contents)
     ("mtime" . howm-view-filter-by-mtime)
 ;     ("ctime" . howm-view-filter-by-ctime) ;; needless
     ("date" . howm-view-filter-by-date)
@@ -155,10 +158,7 @@
 This is a shameful global variable and should be clearned in future.")
 (howm-defvar-risky howm-view-font-lock-keywords nil
   "For internal use.")
-(defvar howm-view-font-lock-first-time t
-  "For internal use.")
 (make-variable-buffer-local 'howm-view-font-lock-keywords)
-(make-variable-buffer-local 'howm-view-font-lock-first-time)
 
 (defvar howm-view-mode-line-text ""
   "For internal use.")
@@ -169,7 +169,7 @@ This is a shameful global variable and should be clearned in future.")
 (riffle-define-derived-mode howm-view-summary-mode riffle-summary-mode "HowmS"
   "memo viewer (summary mode)
 key	binding
----	-------
+---	-------\\<howm-view-summary-mode-map>
 \\[howm-view-summary-open]	Open file
 \\[next-line]	Next item
 \\[previous-line]	Previous item
@@ -194,19 +194,17 @@ key	binding
 \\[howm-view-sort-reverse]	Reverse order
 \\[howm-view-dired]	Invoke Dired-X
 \\[describe-mode]	This help
-\\[riffle-kill-buffer]	Quit
+\\[howm-view-kill-buffer]	Quit
 "
   (howm-view-summary-mode-body))
 
 (defun howm-view-summary-mode-body ()
   (make-local-variable 'font-lock-keywords)
   (cheat-font-lock-mode howm-view-font-lock-silent)
-  (when howm-view-font-lock-first-time
-    (setq howm-view-font-lock-first-time nil)
-    (cheat-font-lock-merge-keywords howm-user-font-lock-keywords
-                                    howm-view-summary-font-lock-keywords
-                                    ;; dirty! Clean dependency between files.
-                                    (howm-reminder-today-font-lock-keywords)))
+  (cheat-font-lock-merge-keywords howm-user-font-lock-keywords
+                                  howm-view-summary-font-lock-keywords
+                                  ;; dirty! Clean dependency between files.
+                                  (howm-reminder-today-font-lock-keywords))
   (when *howm-view-font-lock-keywords*
     (setq howm-view-font-lock-keywords *howm-view-font-lock-keywords*))
   (when howm-view-font-lock-keywords
@@ -228,7 +226,7 @@ key	binding
 (riffle-define-derived-mode howm-view-contents-mode riffle-contents-mode "HowmC"
   "memo viewer (contents mode)
 key	binding
----	-------
+---	-------\\<howm-view-contents-mode-map>
 \\[howm-view-contents-open]	Open file
 \\[next-line]	Next line
 \\[previous-line]	Previous line
@@ -246,7 +244,7 @@ key	binding
 \\[howm-view-sort-reverse]	Reverse order
 \\[howm-view-dired]	Invoke Dired-X
 \\[describe-mode]	This help
-\\[riffle-kill-buffer]	Quit
+\\[howm-view-kill-buffer]	Quit
 "
 ;   (kill-all-local-variables)
   (make-local-variable 'font-lock-keywords)
@@ -314,7 +312,7 @@ key	binding
          (r (riffle-summary name item-list ':howm
                            (howm-view-in-background-p))))
     (if (null r)
-        (message "No match")
+        (message "No match: \"%s\"" name)
       (howm-view-expire-uniq)
       ;; We want to entry font-lock keywords even when background-p.
       (when *howm-view-font-lock-keywords*
@@ -627,6 +625,27 @@ But I'm not sure for multi-byte characters on other versions of emacsen."
          (f `(lambda (item-list rmv-p)
                (funcall #',filter item-list ,r rmv-p))))
     (howm-view-filter-doit f remove-p)))
+
+(defun howm-view-filter-by-keyword-in-summary (&optional remove-p keyword)
+  (interactive "P")
+  (howm-view-filter-by-keyword-general #'howm-view-filter-by-summary
+                                       remove-p keyword))
+
+(defun howm-view-filter-by-keyword-in-contents (&optional remove-p keyword)
+  (interactive "P")
+  (howm-view-filter-by-keyword-general #'howm-view-filter-by-contents
+                                       remove-p keyword))
+
+(defun howm-view-filter-by-keyword-general (f &optional remove-p keyword)
+  (let* ((k (or keyword (howm-completing-read-keyword)))
+         (aliases (if (howm-support-aliases-p)
+                      (howm-keyword-aliases k)
+                    k))
+         (regexp (if (listp aliases)
+                     (mapconcat 'regexp-quote aliases "\\|")
+                   (regexp-quote aliases)))
+         (howm-view-use-grep nil))  ;; necessary for "\\|"
+    (funcall f remove-p regexp)))
 
 (defun howm-view-filter-by-date (&optional remove-p)
   (interactive "P")
@@ -1081,12 +1100,12 @@ in ITEM-LIST belongs."
                                         &optional remove-match)
   "Select items in ITEM-LIST according to REFERENCE-ITEM-LIST.
 When REMOVE-MATCH is nil, return value is list of items i in ITEM-LIST
-which satisfy the condition \"there exists i' in REFERENCE-ITEM-LIST
-such that i and i' belong to same paragraph\" (case 1).
-When REMOVE-MATCH is non-nil and not the symbol 'with-rest',
+which satisfy the condition \"there exists i\\=' in REFERENCE-ITEM-LIST
+such that i and i\\=' belong to same paragraph\" (case 1).
+When REMOVE-MATCH is non-nil and not the symbol \\='with-rest\\=',
 return value is complement of the above list;
 list of items in ITEM-LIST which do not satisfy the above condition (case 2).
-When REMOVE-MATCH is the symbol 'with-rest',
+When REMOVE-MATCH is the symbol \\='with-rest\\=',
 return value is (A . B), where A is the return value of case 1 and
 B is items in REFERENCE-ITEM-LIST that do not match in case 1."
   ;; 

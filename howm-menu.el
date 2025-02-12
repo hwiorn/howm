@@ -1,5 +1,6 @@
+;;; -*- lexical-binding: nil; -*-
 ;;; howm-menu.el --- Wiki-like note-taking tool
-;;; Copyright (C) 2002, 2003, 2004, 2005-2023
+;;; Copyright (C) 2002, 2003, 2004, 2005-2025
 ;;;   HIRAOKA Kazuyuki <kakkokakko@gmail.com>
 ;;;
 ;;; This program is free software; you can redistribute it and/or modify
@@ -35,7 +36,7 @@
   (define-key m "\M-\C-i" 'action-lock-goto-previous-link)
   (define-key m " " 'scroll-up)
   (define-key m [backspace] 'scroll-down)
-  (define-key m "\C-h" 'scroll-down)
+  (define-key m (kbd "DEL") 'scroll-down)
   (define-key m "q" 'bury-buffer)
   (define-key m "?" 'describe-mode)
   (setq howm-menu-mode-map m)
@@ -166,10 +167,16 @@ Regexp R1 is replaced by T1 if T1 is a string.
 
 (defun howm-menu-mode ()
   "howm menu
+
+Think of this menu as a \"modal dialog\" rather than a workspace.
+Typically, the commands listed in the menu apply to the buffer BEHIND
+the menu, not the menu buffer itself.  In other words, they affect the
+buffer that was active before the menu appeared.
+
 key	binding
 ---	-------
-\\[action-lock-magic-return]	Follow link
-\\[action-lock-goto-next-link]	Next link
+\\<action-lock-mode-map>\\[action-lock-magic-return]	Follow link
+\\<howm-menu-mode-map>\\[action-lock-goto-next-link]	Next link
 \\[action-lock-goto-previous-link]	Prev link
 \\[describe-mode]	This help
 \\[bury-buffer]	Quit
@@ -239,9 +246,16 @@ key	binding
 (howm-defvar-risky howm-menu-shortcut-assoc nil)
 (make-variable-buffer-local 'howm-menu-shortcut-assoc)
 (howm-defvar-risky howm-menu-invisible t
-  "*Non nil if 'invisible' property should be used in menu.
+  "*Non nil if \"invisible\" property should be used in menu.
 This must be t at now.
 When this is nil, delete-region is used instead, and bug appears.")
+
+(defun howm-menu-refresh-note ()
+  (unless howm-mode
+    ;; warn about common misuse
+    (error "Not howm-mode. Press ? in the howm menu to see why."))
+  (howm-initialize-buffer)
+  (message "%s has been updated." (buffer-name)))
 
 (defun howm-menu-refresh (&optional file place name)
   (interactive)
@@ -300,7 +314,8 @@ When this is nil, delete-region is used instead, and bug appears.")
 (defun howm-menu-set-face ()
   (set (make-local-variable 'font-lock-keywords-only) t)
   (howm-menu-add-font-lock)
-  (font-lock-fontify-buffer)
+  (font-lock-flush)
+  (font-lock-ensure)
   (when howm-menu-toggle-invisible
     (howm-menu-make-invisible)))
 
@@ -524,10 +539,14 @@ When this is nil, delete-region is used instead, and bug appears.")
 
 (defun howm-find-today (&optional days-before)
   (interactive "P")
-  (howm-find-past (or days-before 0)))
+  (let ((d (cond ((null days-before) 0)
+                 ((listp days-before) (car days-before))
+                 ((eq '- days-before) -1)
+                 (t days-before))))
+    (howm-find-past d)))
 
 (defun howm-find-yesterday (&optional days-before)
-  (interactive)
+  (interactive "p")
   (howm-find-past (or days-before 1)))
 
 (defun howm-one-file-one-day-p ()
@@ -665,8 +684,8 @@ When this is nil, delete-region is used instead, and bug appears.")
 LABEL is only used for message.
 FORMATTER is a function which receives an item and returns an output string
  (without newline).
-FORMATTER can be nil for standard style, 'todo for todo style,
-'schedule for schedule style, or 'full for full note.
+FORMATTER can be nil for standard style, \\='todo for todo style,
+\\='schedule for schedule style, or \\='full for full note.
 ITEM-LIST is list of items which should be shown."
   (let ((f (cond ((null formatter) #'howm-menu-format-item)
                  ((eq 'todo formatter) #'howm-menu-format-todo)
@@ -740,16 +759,18 @@ ITEM-LIST is list of items which should be shown."
          (sorted (howm-sort (lambda (f) (funcall h-r-m-evaluator f))
                             #'howm-view-string>
                             (mapcar #'howm-item-name
-                                    (howm-folder-items howm-directory t))))
+                                    (howm-recent-items-filter
+                                     (howm-folder-items
+                                      howm-directory t)))))
          (files (howm-first-n sorted num)))
     (let ((r (howm-menu-recent-regexp)))
       (if randomp
           (cl-mapcan (lambda (f)
-                            (let ((is (howm-view-search-items r (list f)
-                                                              summarizer)))
-                              (and is (list (nth (random (length is))
-                                                 is)))))
-                          files)
+                       (let ((is (howm-view-search-items r (list f)
+                                                         summarizer)))
+                         (and is (list (nth (random (length is))
+                                            is)))))
+                     files)
         (howm-first-n (howm-view-search-items r files summarizer) num)))))
 
 (defun howm-menu-recent-regexp ()

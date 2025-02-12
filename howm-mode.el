@@ -1,5 +1,6 @@
+;;; -*- lexical-binding: nil; -*-
 ;;; howm-mode.el --- Wiki-like note-taking tool
-;;; Copyright (C) 2002, 2003, 2004, 2005-2023
+;;; Copyright (C) 2002, 2003, 2004, 2005-2025
 ;;;   HIRAOKA Kazuyuki <kakkokakko@gmail.com>
 ;;;
 ;;; This program is free software; you can redistribute it and/or modify
@@ -110,7 +111,7 @@ It is further registered globally if global-p is non-nil."
 (howm-defvar-risky howm-migemo-client nil
   "Command name of migemo-client.
 Example of cmigemo:
-  (setq howm-migemo-client '((type . cmigemo) (command . \"cmigemo\")))
+  (setq howm-migemo-client \\='((type . cmigemo) (command . \"cmigemo\")))
 Example of migemo-client (obsolete):
   (setq howm-migemo-client \"migemo-client\")
 See also `howm-migemo-client-option`")
@@ -118,9 +119,9 @@ See also `howm-migemo-client-option`")
   "List of option for migemo-client.
 Example of cmigemo:
   (setq howm-migemo-client-option
-        '(\"-q\" \"-d\" \"/usr/share/cmigemo/utf-8/migemo-dict\"))
+        \\='(\"-q\" \"-d\" \"/usr/share/cmigemo/utf-8/migemo-dict\"))
 Example of migemo-client (obsolete):
-  (setq howm-migemo-client-option '(\"-H\" \"::1\")
+  (setq howm-migemo-client-option \\='(\"-H\" \"::1\")
 See also `howm-migemo-client`")
 
 ;;; --- level 2 ---
@@ -250,18 +251,16 @@ in `howm-template'. %s is replaced with name of last file. See `format'.")
 ;; Definitions
 
 (define-minor-mode howm-mode
-  "With no argument, this command toggles the mode. 
-Non-null prefix argument turns on the mode.
-Null prefix argument turns off the mode.
+  "Toggle Howm mode.
 
 When the mode is enabled, underlines are drawn on texts which match
-to titles of other files. Typing \\[action-lock-magic-return] there,
+to titles of other files. Typing \\<action-lock-mode-map>\\[action-lock-magic-return] there,
 you can jump to the corresponding file.
 
 key	binding
 ---	-------
 \\[action-lock-magic-return]	Follow link
-\\[howm-refresh]	Refresh buffer
+\\<howm-mode-map>\\[howm-refresh]	Refresh buffer
 \\[howm-list-all]	List all files
 \\[howm-list-grep]	Search (grep)
 \\[howm-create]	Create new file
@@ -332,13 +331,18 @@ key	binding
       (howm-mode-add-font-lock)
       (howm-reminder-add-font-lock)
       (cheat-font-lock-fontify)
-      ;; make-local-hook is obsolete for emacs >= 21.1.
-      (howm-funcall-if-defined (make-local-hook 'after-save-hook))
+      (add-hook 'before-save-hook 'howm-before-save t t)
       (add-hook 'after-save-hook 'howm-after-save t t))))
+
+(defun howm-before-save ()
+  ;; Update the keyword list BEFORE saving the note
+  ;; so that the "Wrote ..." message is not overshadowed.
+  ;; https://github.com/kaorahi/howm/pull/32#issuecomment-2607371907
+  (when howm-mode
+    (howm-keyword-add-current-buffer)))
 
 (defun howm-after-save ()
   (when howm-mode
-    (howm-keyword-add-current-buffer)
     (when howm-refresh-after-save
       (howm-initialize-buffer))
     (when (and howm-menu-refresh-after-save
@@ -352,10 +356,14 @@ key	binding
 (defun howm-list-all ()
   (interactive)
   (howm-set-command 'howm-list-all)
-  (howm-normalize-show "" (howm-all-items))
-  ;; for backward compatibility
-  (cond ((howm-list-title-p) t)  ;; already done in howm-normalize-show
-        (howm-list-all-title (howm-list-title-internal))))
+  (let ((all-items (howm-all-items)))
+    (if (null all-items)
+        (when (y-or-n-p "No notes yet. Create?")
+          (howm-create))
+      (howm-normalize-show "" all-items)
+      ;; for backward compatibility
+      (cond ((howm-list-title-p) t)  ;; already done in howm-normalize-show
+            (howm-list-all-title (howm-list-title-internal))))))
 
 (defun howm-all-items ()
   "Returns list of all items in the first search path."
@@ -367,12 +375,17 @@ key	binding
   (let* ((d (or days howm-list-recent-days))
          (now (current-time))
          (from (howm-days-before now d))
-         (item-list (howm-folder-items howm-directory t)))
-    (howm-normalize-show "" (howm-filter-items-by-mtime item-list from now))
-    ;; clean me [2003-11-30]
-    (cond ((howm-list-title-p) t)  ;; already done in howm-normalize-show
-          (howm-list-recent-title (howm-list-title-internal))
-          ((not days) (howm-view-summary-to-contents)))))
+         (item-list (howm-recent-items-filter
+                     (howm-folder-items howm-directory t)))
+         (recent-items (howm-filter-items-by-mtime item-list from now)))
+    (if (null recent-items)
+        (when (y-or-n-p "No recent notes. Create?")
+          (howm-create))
+      (howm-normalize-show "" recent-items)
+      ;; clean me [2003-11-30]
+      (cond ((howm-list-title-p) t)  ;; already done in howm-normalize-show
+            (howm-list-recent-title (howm-list-title-internal))
+            ((not days) (howm-view-summary-to-contents))))))
 
 ;; clean me: direct access to howm-view-* is undesirable.
 
@@ -457,7 +470,8 @@ key	binding
         (when filter
           (setq items (funcall filter items)))
         (howm-normalize-show name items (or emacs-regexp regexp) nil nil kw)
-        (howm-record-view-window-configuration)))))
+        (howm-record-view-window-configuration)
+        items))))
 
 (defun howm-iigrep (completion-p action)
   (howm-with-iigrep (howm-iigrep-command-for-pattern completion-p)
@@ -889,11 +903,12 @@ We need entire-match in order to
     (cond ((howm-buffer-empty-p) nil)
           ((and here howm-create-here-just) (beginning-of-line))
           (t (howm-create-newline)))
-    (let ((p (point))
-          (insert-f (lambda (switch)
-                      (howm-insert-template (if switch title "")
-                                            b which-template (not switch))))
-          (use-file (not not-use-file)))
+    (let* ((p (point))
+           (template-string (howm-template-string which-template b))
+           (insert-f (lambda (switch)
+                       (howm-insert-template-string template-string (if switch title "")
+                                                    b (not switch))))
+           (use-file (not not-use-file)))
       ;; second candidate which appears when undo is called
       (let ((end (funcall insert-f not-use-file)))
         (save-excursion
@@ -924,10 +939,16 @@ We need entire-match in order to
 
 (defun howm-insert-template (title &optional
                                    previous-buffer which-template not-use-file)
+  (let ((template-string (howm-template-string which-template previous-buffer)))
+    (howm-insert-template-string template-string title
+                                 previous-buffer not-use-file)))
+
+(defun howm-insert-template-string (template-string title &optional
+                                                    previous-buffer not-use-file)
   (let* ((beg (point))
          (f (buffer-file-name previous-buffer))
          (af (and f (howm-abbreviate-file-name f))))
-    (insert (howm-template-string which-template previous-buffer))
+    (insert template-string)
     (let* ((date (format-time-string howm-template-date-format))
            (use-file (not not-use-file))
            (file (cond ((not use-file) "")
@@ -1238,8 +1259,7 @@ KEYWORD itself is always at the head of the returneded list.
 (defun howm-keyword-add-current-buffer ()
   (save-excursion
     (goto-char (point-min))
-    (let ((m (current-message))
-          (keyword-list nil))
+    (let ((keyword-list nil))
       (while (re-search-forward howm-keyword-regexp nil t)
         (let ((key-str (if howm-keyword-list-alias-sep
                            (mapconcat #'identity
@@ -1247,8 +1267,7 @@ KEYWORD itself is always at the head of the returneded list.
                                       howm-keyword-list-alias-sep)
                          (match-string-no-properties howm-keyword-regexp-pos))))
           (setq keyword-list (cons key-str keyword-list))))
-      (howm-keyword-add keyword-list)
-      (message "%s" m))))
+      (howm-keyword-add keyword-list))))
 (defun howm-keyword-add-items (items)
   (let ((files (mapcar #'howm-view-item-filename items)))
     (with-temp-buffer

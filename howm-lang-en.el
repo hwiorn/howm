@@ -1,5 +1,6 @@
+;;; -*- lexical-binding: nil; -*-
 ;;; howm-lang-en.el --- Wiki-like note-taking tool
-;;; Copyright (C) 2005-2023
+;;; Copyright (C) 2005-2025
 ;;;   HIRAOKA Kazuyuki <kakkokakko@gmail.com>
 ;;;
 ;;; This program is free software; you can redistribute it and/or modify
@@ -28,7 +29,7 @@
     ("[New]" (lambda () (howm-create ,howm-menu-action-arg)))
     ("[Add]" (lambda () (howm-create-here ,howm-menu-action-arg)))
     ("[Dup]" howm-dup)
-    ("[Update]" howm-initialize-buffer previous)
+    ("[Update]" howm-menu-refresh-note previous)
     ("[Regexp]" howm-list-grep)
     ("[String]" howm-list-grep-fixed)
     ;;         ("[roma]" howm-list-migemo)

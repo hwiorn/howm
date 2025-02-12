@@ -1,5 +1,6 @@
+;;; -*- lexical-binding: nil; -*-
 ;;; illusion.el --- load, edit, and submit something which is not pure file
-;;; Copyright (C) 2005-2023
+;;; Copyright (C) 2005-2025
 ;;;   HIRAOKA Kazuyuki <kakkokakko@gmail.com>
 ;;;
 ;;; This program is free software; you can redistribute it and/or modify
@@ -53,11 +54,9 @@ It must return non-nil value for successful case.")
   (set-buffer-modified-p nil))
 
 (define-minor-mode illusion-mode
-  "With no argument, this command toggles the mode.
-Non-null prefix argument turns on the mode.
-Null prefix argument turns off the mode.
+  "Toggle Illusion mode.
 
-When the mode is enabled, \\[illusion-submit] submits the content
+When the mode is enabled, \\<illusion-mode-map>\\[illusion-submit] submits the content
 with a manner which is suitable to current buffer.
 
 key	binding
@@ -69,7 +68,6 @@ key	binding
   :keymap `(
             (,illusion-submit-key . illusion-submit)
             )
-  (use-local-map illusion-mode-map)
 )
 
 ;;; Example

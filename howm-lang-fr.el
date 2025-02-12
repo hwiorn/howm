@@ -1,5 +1,6 @@
+;;; -*- lexical-binding: nil; -*-
 ;;; howm-lang-fr.el --- Wiki-like note-taking tool
-;;; Copyright (C) 2005-2023
+;;; Copyright (C) 2005-2025
 ;;;   HIRAOKA Kazuyuki <kakkokakko@gmail.com>
 ;;;
 ;;; French translation by french-speaking howm users
@@ -30,7 +31,7 @@
     ("[Nouveau]" (lambda () (howm-create ,howm-menu-action-arg)))
     ("[Ajouter]" (lambda () (howm-create-here ,howm-menu-action-arg)))
     ("[Dup]" howm-dup)
-    ("[Màj]" howm-initialize-buffer previous)
+    ("[Màj]" howm-menu-refresh-note previous)
     ("[Regexp]" howm-list-grep)
     ("[Chaine]" howm-list-grep-fixed)
     ;;         ("[roma]" howm-list-migemo)

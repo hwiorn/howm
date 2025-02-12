@@ -1,8 +1,8 @@
+;;; -*- lexical-binding: nil; -*-
 ;;; howm.el --- Wiki-like note-taking tool
-;;; -*- Emacs-Lisp -*-
 ;;; @configure_input@
 
-;; Copyright (C) 2002, 2003, 2004, 2005-2023 HIRAOKA Kazuyuki
+;; Copyright (C) 2002, 2003, 2004, 2005-2025 HIRAOKA Kazuyuki
 
 ;; Author: HIRAOKA Kazuyuki <kakkokakko@gmail.com>
 ;; URL: https://kaorahi.github.io/howm/

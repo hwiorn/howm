@@ -1,3 +1,215 @@
+2025-01-30  HIRAOKA Kazuyuki  <kakkokakko@gmail.com>
+
+	* configure.ac: version 1.5.3
+
+2025-01-28  HIRAOKA Kazuyuki  <kakkokakko@gmail.com>
+
+	* howm-mode.el (howm-list-all, howm-list-recent):
+	create new notes when the list is empty
+	https://github.com/kaorahi/howm/issues/35
+	thx > Jabir Ali Ouassou san (jabir.ali.ouassou at hvl.no)
+
+2025-01-26  HIRAOKA Kazuyuki  <kakkokakko@gmail.com>
+
+	* howm-mode.el
+	(howm-initialize-buffer, howm-before-save, howm-after-save):
+	fix duplicated "Wrote ..." message
+	thx > Nicolai Singh san (nicolaisingh at pm.me)
+	https://github.com/kaorahi/howm/pull/32#issuecomment-2607371907
+
+	* howm-common.el (howm-basic-save-buffer): ditto.
+
+2025-01-22  HIRAOKA Kazuyuki  <kakkokakko@gmail.com>
+
+	* howm-mode.el (howm-list-all, howm-list-recent):
+	add message for empty list to help beginners
+	thx > @rhstanton san
+	https://github.com/kaorahi/howm/issues/28
+
+	* howm-menu.el (howm-find-yesterday):
+	Fix howm-find-yesterday prefix arg handling
+	thx > Nicolai Singh san (nicolaisingh at pm.me)
+	https://github.com/kaorahi/howm/pull/32
+
+	* howm-vars.el (howm-menu-footer):
+	Fix howm-menu-footer documentation
+	thx > Nicolai Singh san (nicolaisingh at pm.me)
+	https://github.com/kaorahi/howm/pull/32
+
+	* howm-mode.el (howm-keyword-add-current-buffer):
+	Don't message twice when saving buffer
+	thx > Nicolai Singh san (nicolaisingh at pm.me)
+	https://github.com/kaorahi/howm/pull/32
+
+	* howm-view.el (howm-view-summary):
+	Include search term when showing "No match"
+	thx > Nicolai Singh san (nicolaisingh at pm.me)
+	https://github.com/kaorahi/howm/pull/32
+
+2025-01-06  HIRAOKA Kazuyuki  <kakkokakko@gmail.com>
+
+	* howm-date.el (howm-action-lock-date-search):
+	fix "search for next/previous date" correctly (ref. afb4135)
+	thx > Nicolai Singh san (nicolaisingh at pm.me)
+	for pointing out the issue
+	https://github.com/kaorahi/howm/pull/31
+
+	* howm-mode.el (howm-search): ditto.
+
+2025-01-05  HIRAOKA Kazuyuki  <kakkokakko@gmail.com>
+
+	* howm-view.el (howm-view-summary-mode-body):
+	delete howm-view-font-lock-first-time to fix #27
+	I can't remember why this variable was needed. Only for efficiency?
+	thx > @rhstanton san
+	https://github.com/kaorahi/howm/issues/27
+
+2025-01-03  HIRAOKA Kazuyuki  <kakkokakko@gmail.com>
+
+	* howm-mode.el (howm-insert-template-string):
+	fix double calls to howm-template-string
+	thx > Nicolai Singh san (nicolaisingh at pm.me)
+	https://github.com/kaorahi/howm/pull/26
+
+2024-12-31  HIRAOKA Kazuyuki  <kakkokakko@gmail.com>
+
+	* configure.ac: version 1.5.2
+
+2024-12-22  HIRAOKA Kazuyuki  <kakkokakko@gmail.com>
+
+	* riffle.el (riffle-pop-to-buffer):
+	avoid double-splitting windows when display-buffer-base-action is non-nil
+	thx > Kevin Fleming san (kvnflm at gmail.com)
+	https://github.com/kaorahi/howm/pull/21
+
+	* riffle.el (riffle-protected-localvar-prefixes): fix faces issue
+	thx > @mmarshall540 san
+	https://github.com/kaorahi/howm/issues/22
+
+	* howm-vars.el (howm-recent-excluded-files-regexp):
+	add a user-option to exclude certain files from the recent-note lists
+	thx > @mmarshall540 san
+	https://github.com/kaorahi/howm/pull/23
+
+	* howm-mode.el (howm-list-recent): ditto.
+
+	* howm-menu.el (howm-recent-menu): ditto.
+
+	* howm-common.el (howm-recent-items-filter): ditto.
+
+2024-11-21  HIRAOKA Kazuyuki  <kakkokakko@gmail.com>
+
+	* README.md: update colorscheme link
+	thx > Jabir Ali Ouassou san (jabir.ali.ouassou at hvl.no)
+	https://github.com/kaorahi/howm/pull/20
+
+2024-11-02  HIRAOKA Kazuyuki  <kakkokakko@gmail.com>
+
+	* howm-view.el
+	(howm-view-filter-methods): add filter-by-keyword to support aliases
+	(howm-view-filter-by-keyword-in-summary): ditto
+	(howm-view-filter-by-keyword-in-contents): ditto
+	(howm-view-filter-by-keyword-general): ditto
+	thx > Pere Quintana san (@bitic)
+	https://github.com/kaorahi/howm/issues/19
+
+2024-10-14  HIRAOKA Kazuyuki  <kakkokakko@gmail.com>
+
+	* riffle.el (riffle-mode):
+	summary/contents buffers inherit from text-mode
+	thx > Jabir Ali Ouassou san (jabir.ali.ouassou at hvl.no)
+	https://github.com/kaorahi/howm/issues/11
+
+2024-09-26  HIRAOKA Kazuyuki  <kakkokakko@gmail.com>
+
+	* howm-menu.el (howm-menu-mode, howm-menu-refresh-note):
+	add hint to prevent typical misuse of menu
+	thx > @termitereform san
+	https://github.com/kaorahi/howm/issues/18
+
+	* howm-lang-en.el: ditto.
+
+	* howm-lang-fr.el: ditto.
+
+	* howm-lang-ja.el: ditto.
+
+	* howm-menu-en.el: ditto.
+
+	* howm-menu-fr.el: ditto.
+
+	* howm-menu-ja.el: ditto.
+
+2024-09-22  HIRAOKA Kazuyuki  <kakkokakko@gmail.com>
+
+	* action-lock.el (action-lock-mode):
+	fix unintended "M-x ..." in describe-mode
+	thx > Chris Gerber san (chris at theGerb.com)
+	https://github.com/kaorahi/howm/pull/16
+
+	* howm-menu.el (howm-menu-mode): ditto.
+
+	* howm-mode.el (howm-mode): ditto.
+
+	* howm-reminder.el (howm-simulate-todo-mode): ditto.
+
+	* howm-view.el
+	(howm-view-summary-mode, howm-view-contents-mode): ditto.
+
+	* illusion.el (illusion-mode): ditto.
+
+	* riffle.el
+	(riffle-sample-summary-mode, riffle-sample-contents-mode): ditto.
+
+	* howm-mode.el (howm-mode): fix wrong docstring
+
+	* action-lock.el (action-lock-mode): ditto.
+
+	* illusion.el (illusion-mode): ditto.
+
+	* howm-reminder.el (howm-simulate-todo-mode):
+	disable unused action-lock-mode in howm-simulate-todo
+
+	* action-lock.el (action-lock-mode): fix typo in docstring
+
+2024-09-21  HIRAOKA Kazuyuki  <kakkokakko@gmail.com>
+
+	* howm-view.el (howm-view-summary-mode, howm-view-contents-mode):
+	fix unintended "M-x ..." for "Quit" in describe-mode
+
+2024-09-20  HIRAOKA Kazuyuki  <kakkokakko@gmail.com>
+
+	* riffle.el: fix broken back-scrolling by BS key in terminals
+	thx > Jabir Ali Ouassou san (jabir.ali.ouassou at hvl.no)
+	https://github.com/kaorahi/howm/issues/15
+
+	* howm-menu.el: ditto
+
+2024-09-19  HIRAOKA Kazuyuki  <kakkokakko@gmail.com>
+
+	* riffle.el: remove obsolete C-h binding
+	thx > Jabir Ali Ouassou san (jabir.ali.ouassou at hvl.no)
+	https://github.com/kaorahi/howm/issues/15
+
+	* howm-menu.el: ditto
+
+	* howm-misc.el
+	(howm-set-lang): sample/bug-report.txt is UTF-8 now
+	(howm-setup-change-log): avoid Japanese comment
+
+	* howm-misc.el (howm-setup-change-log): avoid obsolete find-if
+
+	* README.md: add screenshot by @jabirali
+	thx > Jabir Ali Ouassou san (jabir.ali.ouassou at hvl.no)
+	https://github.com/kaorahi/howm/issues/13#issuecomment-2358456865
+
+2024-09-07  HIRAOKA Kazuyuki  <kakkokakko@gmail.com>
+
+	* README.md: comment out Emacs Elements channel as it seems unavailable
+
+	* README.md: add "quick start" section
+	thx > Jabir Ali Ouassou san (jabir.ali.ouassou at hvl.no)
+	https://github.com/kaorahi/howm/pull/8
+
 2024-02-29  HIRAOKA Kazuyuki  <kakkokakko@gmail.com>
 
 	* howm-reminder.el: fix & improve howm-simulate-todo
